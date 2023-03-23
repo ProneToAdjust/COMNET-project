@@ -1,9 +1,10 @@
 #### TEST FILE FOR TEXT-TO-SPEECH ####
-# espeak, TTS, playsound
+# espeak, TTS, playsound, pygame
 # https://github.com/coqui-ai/TTS/discussions/1812
 # pip install resampy==0.3.1
 from TTS.api import TTS
-from playsound import playsound
+import pygame
+#from playsound import playsound
 
 # Running a multi-speaker and multi-lingual model
 
@@ -21,12 +22,15 @@ model_name = TTS.list_models()[0]
 tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
 # Run TTS
 tts.tts_to_file(text="Hello World!", file_path="output.wav")
-playsound(".//output.wav")
+pygame.mixer.init()
+sound = pygame.mixer.Sound('./output.wav')
+playing = sound.play()
+#playsound(".//output.wav")
 
 # Running a single speaker model
 
 # Init TTS with the target model name
-tts = TTS(model_name="tts_models/ja/kokoro/tacotron2-DDC", progress_bar=False, gpu=False)
+#tts = TTS(model_name="tts_models/ja/kokoro/tacotron2-DDC", progress_bar=False, gpu=False)
 # Run TTS
 #tttts.tts_to_file(text="おはようございます", file_path="output1.wav")
 #playsound("./output1.wav")
@@ -34,7 +38,10 @@ tts = TTS(model_name="tts_models/ja/kokoro/tacotron2-DDC", progress_bar=False, g
 tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=False, gpu=False)
 # Run TTS
 tts.tts_to_file(text="你好吗？我很好。", file_path="output2.wav")
-playsound(".//output2.wav")
+pygame.mixer.init()
+sound = pygame.mixer.Sound('./output.wav')
+playing = sound.play()
+#playsound(".//output2.wav")
 
 
 # Example voice cloning with YourTTS in English, French and Portuguese:
