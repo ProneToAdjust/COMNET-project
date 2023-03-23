@@ -15,6 +15,8 @@ tts.tts_to_file(text="Hello World!", file_path="output.wav")
 pygame.mixer.init()
 sound = pygame.mixer.Sound('./output.wav')
 playing = sound.play()
+while playing.get_busy():
+    pygame.time.delay(100)
 
 # TTS in chinese
 # Choosing the model
@@ -25,5 +27,7 @@ tts.tts_to_file(text="你好吗？我很好。", file_path="output2.wav")
 pygame.mixer.init()
 sound = pygame.mixer.Sound('./output.wav')
 playing = sound.play()
+while playing.get_busy():
+    pygame.time.delay(100)
 
 
