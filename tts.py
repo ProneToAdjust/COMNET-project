@@ -1,6 +1,7 @@
 #### TEST FILE FOR TEXT-TO-SPEECH ####
 # espeak, TTS, playsound
-#https://github.com/coqui-ai/TTS/discussions/1812
+# https://github.com/coqui-ai/TTS/discussions/1812
+# pip install resampy==0.3.1
 from TTS.api import TTS
 from playsound import playsound
 
@@ -20,7 +21,7 @@ model_name = TTS.list_models()[0]
 tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
 # Run TTS
 tts.tts_to_file(text="Hello World!", file_path="output.wav")
-playsound("/Users/gabriel/Documents/Github/COMNET-project/output.wav")
+playsound("./output.wav")
 
 # Running a single speaker model
 
@@ -28,12 +29,12 @@ playsound("/Users/gabriel/Documents/Github/COMNET-project/output.wav")
 tts = TTS(model_name="tts_models/ja/kokoro/tacotron2-DDC", progress_bar=False, gpu=False)
 # Run TTS
 #tttts.tts_to_file(text="おはようございます", file_path="output1.wav")
-#playsound("/Users/gabriel/Documents/Github/COMNET-project/output1.wav")
+#playsound("./output1.wav")
 
 tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=False, gpu=False)
 # Run TTS
 tts.tts_to_file(text="你好吗？我很好。", file_path="output2.wav")
-playsound("/Users/gabriel/Documents/Github/COMNET-project/output2.wav")
+playsound("./output2.wav")
 
 
 # Example voice cloning with YourTTS in English, French and Portuguese:
