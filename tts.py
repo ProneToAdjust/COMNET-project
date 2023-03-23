@@ -25,7 +25,7 @@ tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=Fa
 tts.tts_to_file(text="你好吗？我很好。", file_path="output2.wav")
 # Playing the audio
 pygame.mixer.init()
-sound = pygame.mixer.Sound('./output.wav')
+sound = pygame.mixer.Sound('./output2.wav')
 playing = sound.play()
 while playing.get_busy():
     pygame.time.delay(100)
