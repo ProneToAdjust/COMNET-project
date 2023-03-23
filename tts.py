@@ -21,7 +21,7 @@ model_name = TTS.list_models()[0]
 tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
 # Run TTS
 tts.tts_to_file(text="Hello World!", file_path="output.wav")
-playsound("./output.wav")
+playsound(".//output.wav")
 
 # Running a single speaker model
 
@@ -34,7 +34,7 @@ tts = TTS(model_name="tts_models/ja/kokoro/tacotron2-DDC", progress_bar=False, g
 tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=False, gpu=False)
 # Run TTS
 tts.tts_to_file(text="你好吗？我很好。", file_path="output2.wav")
-playsound("./output2.wav")
+playsound(".//output2.wav")
 
 
 # Example voice cloning with YourTTS in English, French and Portuguese:
