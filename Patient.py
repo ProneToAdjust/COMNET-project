@@ -4,6 +4,8 @@ import threading
 import paho.mqtt.client as mqtt
 from gpiozero import LED, Button
 from gpiozero.pins.pigpio import PiGPIOFactory
+from TTS.api import TTS
+import pygame
 
 class Patient:
     def __init__(self, check_in_time, led_pin, btn_pin, rpi_ip) -> None:
@@ -77,6 +79,8 @@ class Patient:
 
     def on_message(self, client, userdata, msg):
         msg = msg.payload.decode()
+        
+        ttsMsg = msg.split(':')
 
         if msg == 'off':
             self.off_led()
@@ -84,6 +88,13 @@ class Patient:
             self.btn.when_activated = None
             # set check in datetime for next day
             self.check_in_time = self.check_in_time + datetime.timedelta(days=1)
+        
+        elif ttsMsg[0] == 'tts':
+            print("About to play tts")
+            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[1],))
+            self.play_sound_thread.start()
+        
+        print("Message end")
 
     def init_gpio(self):
         if self.rpi_ip is None:
@@ -103,3 +114,17 @@ class Patient:
     def off_led(self):
         self.led.off()
         print('led off')
+    
+    def play_tts(self, msg):
+        print(msg)
+        print("converting TTS")
+        tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
+        tts.tts_to_file(text=msg, file_path="output.wav")
+        
+        print("playing sound")
+        pygame.mixer.init()
+        sound = pygame.mixer.Sound('./output.wav')
+        playing = sound.play()
+        while playing.get_busy():
+            pygame.time.delay(100)
+        #self.play_sound_thread.cancel()
