@@ -7,6 +7,7 @@ from gpiozero.pins.pigpio import PiGPIOFactory
 #from TTS.api import TTS
 from gtts import gTTS
 import pygame
+import json
 
 class Patient:
     def __init__(self, check_in_time, led_pin, btn_pin, rpi_ip, name) -> None:
@@ -55,14 +56,20 @@ class Patient:
         self.check_in_timer_thread.cancel()
         self.off_led()
 
-        self.mqtt_client.publish("to_hc_worker", "off")
+        payload = {"name":self.patient_name,
+                   "cmd":"led_off"}
+
+        self.mqtt_client.publish("to_hc_worker", json.dumps(payload))
 
         # set check in datetime for next day
         self.check_in_time = self.check_in_time + datetime.timedelta(days=1)
 
     def on_timer_end(self):
         # publish mqtt msg to HcWorker
-        self.mqtt_client.publish("to_hc_worker", "on")
+        payload = {"name":self.patient_name,
+                   "cmd":"led_on"}
+
+        self.mqtt_client.publish("to_hc_worker", json.dumps(payload))
         print('mqtt msg published to HcWorker')
 
     def init_mqtt(self):
@@ -77,7 +84,8 @@ class Patient:
 
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code "+str(rc))
-        self.mqtt_client.subscribe("to_patient")
+        topic = self.patient_name.replace(' ','_')
+        self.mqtt_client.subscribe(topic)
 
     def on_message(self, client, userdata, msg):
         msg = msg.payload.decode()
