@@ -4,6 +4,9 @@ import threading
 import paho.mqtt.client as mqtt
 from gpiozero import LED, Button
 from gpiozero.pins.pigpio import PiGPIOFactory
+#from TTS.api import TTS
+from gtts import gTTS
+import pygame
 
 class Patient:
     def __init__(self, check_in_time, led_pin, btn_pin, rpi_ip) -> None:
@@ -77,6 +80,12 @@ class Patient:
 
     def on_message(self, client, userdata, msg):
         msg = msg.payload.decode()
+        
+        # ttsMsg will be in the format:
+        # msg:tts:language
+        # eg, tts:en:Hello tts:cn:你好
+        
+        ttsMsg = msg.split(':')
 
         if msg == 'off':
             self.off_led()
@@ -84,6 +93,11 @@ class Patient:
             self.btn.when_activated = None
             # set check in datetime for next day
             self.check_in_time = self.check_in_time + datetime.timedelta(days=1)
+        
+        elif ttsMsg[0] == 'tts':
+            print("1/4 Running TTS Method")
+            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[1],ttsMsg[2],))
+            self.play_sound_thread.start()
 
     def init_gpio(self):
         if self.rpi_ip is None:
@@ -103,3 +117,23 @@ class Patient:
     def off_led(self):
         self.led.off()
         print('led off')
+    
+    def play_tts(self, lang, msg):
+        print("2/4 Converting message to audio")
+        tts = None
+        if lang == 'cn':
+            #tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=True, gpu=False)
+            tts = gTTS(text=msg, lang='zh-cn')
+        else:
+            #tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True, gpu=False)
+            tts = gTTS(text=msg, lang='en')
+        #tts.tts_to_file(text=msg, file_path="output.wav")
+        tts.save("output.mp3")
+        print("3/4 Playing audio")
+        pygame.mixer.init()
+        # sound = pygame.mixer.Sound('./output.wav')
+        sound = pygame.mixer.Sound('./output.mp3')
+        playing = sound.play()
+        while playing.get_busy():
+            pygame.time.delay(100)
+        print("4/4 End of audio")

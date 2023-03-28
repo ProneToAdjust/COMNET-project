@@ -66,3 +66,6 @@ class HealthcareWorker:
             self.btn = Button(self.btn_pin, pin_factory=factory)
 
         print('gpio initialised')
+    
+    def on_send_message(self, msg):
+        self.client.publish('to_patient', msg)
