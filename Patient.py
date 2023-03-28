@@ -80,6 +80,10 @@ class Patient:
     def on_message(self, client, userdata, msg):
         msg = msg.payload.decode()
         
+        # ttsMsg will be in the format:
+        # msg:tts:language
+        # eg, hello:tts:en 你好:tts:cn
+        
         ttsMsg = msg.split(':')
 
         if msg == 'off':
@@ -89,12 +93,10 @@ class Patient:
             # set check in datetime for next day
             self.check_in_time = self.check_in_time + datetime.timedelta(days=1)
         
-        elif ttsMsg[0] == 'tts':
-            print("About to play tts")
-            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[1],))
+        elif ttsMsg[1] == 'tts':
+            print("1/4 Running TTS Method")
+            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[0],ttsMsg[2],))
             self.play_sound_thread.start()
-        
-        print("Message end")
 
     def init_gpio(self):
         if self.rpi_ip is None:
@@ -115,16 +117,19 @@ class Patient:
         self.led.off()
         print('led off')
     
-    def play_tts(self, msg):
-        print(msg)
-        print("converting TTS")
-        tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
+    def play_tts(self, msg, lang):
+        print("2/4 Converting TTS to wav file")
+        tts = None
+        if lang == 'cn':
+            tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=True, gpu=False)
+        else:
+            tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True, gpu=False)
         tts.tts_to_file(text=msg, file_path="output.wav")
         
-        print("playing sound")
+        print("3/4 Playing wav file")
         pygame.mixer.init()
         sound = pygame.mixer.Sound('./output.wav')
         playing = sound.play()
         while playing.get_busy():
             pygame.time.delay(100)
-        #self.play_sound_thread.cancel()
+        print("4/4 End of wav file")
