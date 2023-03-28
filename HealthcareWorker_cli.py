@@ -107,9 +107,9 @@ if __name__ == '__main__':
     # with open('patient_dictionary.pkl', 'rb') as f:
     #     patientDictionary = pickle.load(f)
     
-    LED_PIN = 2
-    BTN_PIN = 3
-    RPI_IP = "192.168.10.136"
+    LED_PIN = GPIO_PIN_NO
+    BTN_PIN = GPIO_PIN_NO
+    RPI_IP = 'RPI IP HERE'
     
     hc = HealthcareWorker(LED_PIN, BTN_PIN, RPI_IP)
     piThread = Thread(target=hc.start)
