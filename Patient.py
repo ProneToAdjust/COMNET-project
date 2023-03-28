@@ -9,11 +9,12 @@ from gtts import gTTS
 import pygame
 
 class Patient:
-    def __init__(self, check_in_time, led_pin, btn_pin, rpi_ip) -> None:
+    def __init__(self, check_in_time, led_pin, btn_pin, rpi_ip, name) -> None:
         self.check_in_time = check_in_time
         self.led_pin = led_pin
         self.btn_pin = btn_pin
         self.rpi_ip = rpi_ip
+        self.patient_name = name
         self.init_mqtt()
         self.init_gpio()
         
