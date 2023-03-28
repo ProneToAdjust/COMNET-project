@@ -4,7 +4,8 @@ import threading
 import paho.mqtt.client as mqtt
 from gpiozero import LED, Button
 from gpiozero.pins.pigpio import PiGPIOFactory
-from TTS.api import TTS
+#from TTS.api import TTS
+from gtts import gTTS
 import pygame
 
 class Patient:
@@ -82,7 +83,7 @@ class Patient:
         
         # ttsMsg will be in the format:
         # msg:tts:language
-        # eg, hello:tts:en 你好:tts:cn
+        # eg, tts:en:Hello tts:cn:你好
         
         ttsMsg = msg.split(':')
 
@@ -93,9 +94,9 @@ class Patient:
             # set check in datetime for next day
             self.check_in_time = self.check_in_time + datetime.timedelta(days=1)
         
-        elif ttsMsg[1] == 'tts':
+        elif ttsMsg[0] == 'tts':
             print("1/4 Running TTS Method")
-            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[0],ttsMsg[2],))
+            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[1],ttsMsg[2],))
             self.play_sound_thread.start()
 
     def init_gpio(self):
@@ -117,19 +118,22 @@ class Patient:
         self.led.off()
         print('led off')
     
-    def play_tts(self, msg, lang):
-        print("2/4 Converting TTS to wav file")
+    def play_tts(self, lang, msg):
+        print("2/4 Converting message to audio")
         tts = None
         if lang == 'cn':
-            tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=True, gpu=False)
+            #tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=True, gpu=False)
+            tts = gTTS(text=msg, lang='zh-cn')
         else:
-            tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True, gpu=False)
-        tts.tts_to_file(text=msg, file_path="output.wav")
-        
-        print("3/4 Playing wav file")
+            #tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True, gpu=False)
+            tts = gTTS(text=msg, lang='en')
+        #tts.tts_to_file(text=msg, file_path="output.wav")
+        tts.save("output.mp3")
+        print("3/4 Playing audio")
         pygame.mixer.init()
-        sound = pygame.mixer.Sound('./output.wav')
+        # sound = pygame.mixer.Sound('./output.wav')
+        sound = pygame.mixer.Sound('./output.mp3')
         playing = sound.play()
         while playing.get_busy():
             pygame.time.delay(100)
-        print("4/4 End of wav file")
+        print("4/4 End of audio")

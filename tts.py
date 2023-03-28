@@ -3,6 +3,8 @@
 # apt install espeak
 # pip install resampy==0.3.1
 # Confiuring the audio output device on pi: https://www.jeffgeerling.com/blog/2022/playing-sounds-python-on-raspberry-pi
+
+# Connecting to bluetooth https://www.digikey.com/en/maker/blogs/raspberry-pi-wi-fi-bluetooth-setup-how-to-configure-your-pi-4-model-b-3-model-b
 from TTS.api import TTS
 import pygame
 
