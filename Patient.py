@@ -22,7 +22,6 @@ class Patient:
         # loop until it reaches the check in time
         while True:
             time.sleep(1)
-
             if datetime.datetime.now() > self.check_in_time:
                 # notify user
                 print('press button')
@@ -102,9 +101,8 @@ class Patient:
         elif msg['cmd'] == 'time':
             today = datetime.datetime.today()
             time = datetime.datetime.strptime(msg['time'], '%H:%M')
-            print(self.check_in_time)
             self.check_in_time = datetime.datetime(today.year, today.month, today.day, time.hour, time.minute)
-            print(self.check_in_time)
+            print("New time set to: " + self.check_in_time)
 
     def init_gpio(self):
         if self.rpi_ip is None:

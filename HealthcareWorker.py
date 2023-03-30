@@ -62,7 +62,7 @@ class HealthcareWorker:
         self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print("Connected with result code "+str(rc))
+        #print("Connected with result code "+str(rc))
         self.client.subscribe("to_hc_worker")
 
     def on_message(self, client, userdata, msg):
@@ -71,12 +71,12 @@ class HealthcareWorker:
         if msg['cmd'] == 'led_on':
             if msg['name'] == 'Sibei Suei':
                 self.led.on()
-                print('led on')
+                #print('led on')
                 poll_thread = Thread(target=self.poll_button, args=(msg['name'],))
                 poll_thread.start()
             elif msg['name'] == 'Sibei Sian':
                 self.led_2.on()
-                print('led_2 on')
+                #print('led_2 on')
                 poll_thread = Thread(target=self.poll_button_2, args=(msg['name'],))
                 poll_thread.start()
 
@@ -86,10 +86,10 @@ class HealthcareWorker:
         elif msg['cmd'] == 'led_off':
             if msg['name'] == 'Sibei Suei':
                 self.led.off()
-                print('led off')
+                #print('led off')
             elif msg['name'] == 'Sibei Sian':
                 self.led_2.off()
-                print('led_2 off')
+                #print('led_2 off')
             
 
     def init_gpio(self):
