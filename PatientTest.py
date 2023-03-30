@@ -8,6 +8,7 @@ PATIENT_NAME = 'PATIENT NAME HERE'
 
 # this will set the check in alert to sound 5 secs from initialisation
 check_in_time = datetime.datetime.now()
+check_out_time_limit = "00:00:20"
 
-pat = Patient(check_in_time, LED_PIN, BTN_PIN, RPI_IP, PATIENT_NAME)
+pat = Patient(check_in_time, check_out_time_limit, LED_PIN, BTN_PIN, RPI_IP, PATIENT_NAME)
 pat.start()

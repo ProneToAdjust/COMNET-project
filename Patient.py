@@ -7,25 +7,30 @@ from gpiozero.pins.pigpio import PiGPIOFactory
 from gtts import gTTS
 import pygame
 import json
+from threading import Timer
+from sms import sms
 
 class Patient:
-    def __init__(self, check_in_time, led_pin, btn_pin, rpi_ip, name) -> None:
+    def __init__(self, check_in_time, check_out_time_limit, led_pin, btn_pin, rpi_ip, name) -> None:
         self.check_in_time = check_in_time
+        self.check_out_time_limit = check_out_time_limit
         self.led_pin = led_pin
         self.btn_pin = btn_pin
         self.rpi_ip = rpi_ip
         self.patient_name = name
+        self.current_time = datetime.datetime.now()
+        self.sms_sent = False
         self.init_mqtt()
         self.init_gpio()
         
     def start(self):
         # loop until it reaches the check in time
         while True:
-            time.sleep(1)
+            time.sleep(1)            
             if datetime.datetime.now() > self.check_in_time:
                 # notify user
                 print('press button')
-
+                
                 # turn on led
                 self.on_led()
 
@@ -44,6 +49,14 @@ class Patient:
 
         # keep looping when btn is not press and still has a callback function
         while not self.btn.is_active and self.btn.when_activated:
+            timediff = datetime.datetime.now() - self.current_time
+            format_timediff = "0" + str(timediff)[0:7]
+                
+            if(format_timediff == self.check_out_time_limit and self.sms_sent == False):
+                self.sms_sent = True
+                print("SMS sent")
+                send_sms = sms()
+                send_sms.send_sms("+6598226923")
             pass
 
     def on_button_press(self):
@@ -102,7 +115,7 @@ class Patient:
             today = datetime.datetime.today()
             time = datetime.datetime.strptime(msg['time'], '%H:%M')
             self.check_in_time = datetime.datetime(today.year, today.month, today.day, time.hour, time.minute)
-            print("New time set to: " + self.check_in_time)
+            print("New time set to: " + self.check_in_time.isoformat())
 
     def init_gpio(self):
         if self.rpi_ip is None:
