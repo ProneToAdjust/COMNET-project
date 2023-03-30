@@ -40,7 +40,8 @@ class HealthcareWorker:
 
             self.led.off()
             topic = patient_name.replace(' ', '_')
-            self.client.publish(topic, 'off')
+            jsonString = json.dumps({"cmd": "led_off"})
+            self.client.publish(topic, jsonString)
 
     def on_button_press_2(self, patient_name):
             # disable button
@@ -48,7 +49,8 @@ class HealthcareWorker:
 
             self.led_2.off()
             topic = patient_name.replace(' ', '_')
-            self.client.publish(topic, 'off')
+            jsonString = json.dumps({"cmd": "led_off"})
+            self.client.publish(topic, jsonString)
 
     def init_mqtt(self):
         self.client = mqtt.Client()
@@ -105,5 +107,5 @@ class HealthcareWorker:
 
         print('gpio initialised')
     
-    def on_send_message(self, topic, msg):
+    def send_message(self, topic, msg):
         self.client.publish(topic, msg)

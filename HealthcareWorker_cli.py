@@ -2,38 +2,63 @@ import os
 from HealthcareWorker import HealthcareWorker
 from threading import Thread
 import json
+from datetime import datetime
+import time
 
-#patientDictionary = {}
 hc = None
 piThread = None
 
-def setupPatient():
-    print("############# OPTION 1: SETUP PATIENT #############")
-    
-    
-    pass
-
 def editPatient():
+    os.system('cls' if os.name == 'nt' else 'clear')
     print("""
 ###############################################################
-################### OPTION 2: EDIT PATIENT ####################
-############# SELECT A PATIENT TO EDIT INFORMATION ############
+############## OPTION 1: EDIT PATIENT ALERT TIME ##############
+############# SELECT A PATIENT TO EDIT ALERT TIME #############
 ###############################################################
 0. Back to main menu""")
     patientFile = open("patients.txt", "r")
     count = 0
+    patientList = []
     for name in patientFile:
         count += 1
-        print("{count}. {name}".format(count=count, name=name))
+        patientList.append(name)
+        print("{count}. {name}".format(count=count, name=name).strip())
     patientFile.close()
     option = input("Enter your option: ")
+    if option == '0':
+        option()
+    else:
+        try:
+            if int(option) <= count:
+                changePatientTime(patientList[int(option)-1].replace(' ', '_').strip())
+            else:
+                editPatient()
+        except:
+            editPatient()
+            
+def changePatientTime(name):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("""
+###############################################################
+################## CHANGE PATIENT ALERT TIME ##################
+###############################################################
+0. Back to main menu""")
+    timeStr = input("Enter new alert time (HH:MM): ")
+    try:
+        timeObject = datetime.strptime(timeStr, '%H:%M').time()
+        jsonString = json.dumps({"cmd": "time", "time": timeStr})
+        hc.send_message(name, jsonString)
+        print("TIME CHANGED")
+    except:
+        changePatientTime(name)
+    time.sleep(5)
+    options()
     
-
 def ttsMessage():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("""
 ###############################################################
-################### OPTION 3: SEND MESSAGE ####################
+################### OPTION 2: SEND MESSAGE ####################
 ############# SELECT A PATIENT TO SEND MESSAGE TO #############
 ###############################################################
 0. Back to main menu""")
@@ -43,7 +68,7 @@ def ttsMessage():
     for name in patientFile:
         count += 1
         patientList.append(name)
-        print("{count}. {name}".format(count=count, name=name))
+        print("{count}. {name}".format(count=count, name=name).strip())
     patientFile.close()
     option = input("Enter your option: ")
     
@@ -93,7 +118,7 @@ def composeMessage(topic, language):
     else:
         # Forward message in HealthcareWorker.py
         jsonString = json.dumps({"cmd": "tts", "lang": language, "msg": option})
-        hc.on_send_message(topic, jsonString)
+        hc.send_message(topic, jsonString)
     options()
 
 def options():
@@ -104,30 +129,23 @@ def options():
 ####################### SELECT AN OPTION ######################
 ###############################################################
 0. EXIT
-1. SETUP A NEW PATIENT
-2. EDIT AN EXISTING PATIENT
-3. SEND A MESSAGE TO A PATIENT""")
+1. CHANGE PATIENT ALERT TIME
+2. SEND A MESSAGE TO A PATIENT""")
     option = input("Enter your option: ")
     if option == '0':
         exit()
-    elif option == '1':
-        setupPatient()
-    elif option == '2':
+    if option == '1':
         editPatient()
-    elif option == '3':
+    elif option == '2':
         ttsMessage()
     else:
         options()
 
 
-if __name__ == '__main__':
-    
-    # with open('patient_dictionary.pkl', 'rb') as f:
-    #     patientDictionary = pickle.load(f)
-    
-    LED_PIN = GPIO_PIN_NO
-    BTN_PIN = GPIO_PIN_NO
-    RPI_IP = 'RPI IP HERE'
+if __name__ == '__main__':    
+    LED_PIN = 20
+    BTN_PIN = 21
+    RPI_IP = '192.168.10.136'
     
     hc = HealthcareWorker(LED_PIN, BTN_PIN, 3, 4, RPI_IP)
     piThread = Thread(target=hc.start)
