@@ -1,7 +1,7 @@
 import os
-import pickle
 from HealthcareWorker import HealthcareWorker
 from threading import Thread
+import json
 
 #patientDictionary = {}
 hc = None
@@ -11,17 +11,23 @@ def setupPatient():
     print("############# OPTION 1: SETUP PATIENT #############")
     
     
-    #with open('patient_dictionary.pkl', 'wb') as f:
-    #    pickle.dump(patientDictionary, f)
     pass
 
 def editPatient():
-    print("############# OPTION 2: EDIT PATIENT #############")
+    print("""
+###############################################################
+################### OPTION 2: EDIT PATIENT ####################
+############# SELECT A PATIENT TO EDIT INFORMATION ############
+###############################################################
+0. Back to main menu""")
+    patientFile = open("patients.txt", "r")
+    count = 0
+    for name in patientFile:
+        count += 1
+        print("{count}. {name}".format(count=count, name=name))
+    patientFile.close()
+    option = input("Enter your option: ")
     
-    
-    #with open('patient_dictionary.pkl', 'wb') as f:
-    #    pickle.dump(patientDictionary, f)
-    pass
 
 def ttsMessage():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -31,18 +37,28 @@ def ttsMessage():
 ############# SELECT A PATIENT TO SEND MESSAGE TO #############
 ###############################################################
 0. Back to main menu""")
-    print("1. John Doe")
-    print("2. Jane Doe")
-    
+    patientFile = open("patients.txt", "r")
+    count = 0
+    patientList = []
+    for name in patientFile:
+        count += 1
+        patientList.append(name)
+        print("{count}. {name}".format(count=count, name=name))
+    patientFile.close()
     option = input("Enter your option: ")
+    
     if option == "0":
         options()
-    elif option == "1" or option == "2": # if patient exists
-        langMessage(int(option))
     else:
-        ttsMessage()
+        try:
+            if int(option) <= count:
+                langMessage(patientList[int(option)-1].replace(' ', '_').strip())
+            else:
+                ttsMessage()
+        except:
+            ttsMessage()
 
-def langMessage(patientID): # TODO determine how to send message to individual patients
+def langMessage(topic): # TODO determine how to send message to individual patients
     os.system('cls' if os.name == 'nt' else 'clear')
     # Select language
     print("""
@@ -58,12 +74,12 @@ def langMessage(patientID): # TODO determine how to send message to individual p
     elif option == "1" or option == "2":
         language = "cn"
         if option == "1":
-            language = "en"            
-        composeMessage(patientID, language)
+            language = "en"
+        composeMessage(topic, language)
     else:
-        langMessage(patientID)
+        langMessage(topic)
         
-def composeMessage(patientID, language):
+def composeMessage(topic, language):
     os.system('cls' if os.name == 'nt' else 'clear')
     # Compose message
     print("""
@@ -76,9 +92,8 @@ def composeMessage(patientID, language):
         pass
     else:
         # Forward message in HealthcareWorker.py
-        language = language + ":"
-        fullQuery = "tts:" + language + option
-        hc.on_send_message(fullQuery)
+        jsonString = json.dumps({"cmd": "tts", "lang": language, "msg": option})
+        hc.on_send_message(topic, jsonString)
     options()
 
 def options():
@@ -88,11 +103,14 @@ def options():
 ###############################################################
 ####################### SELECT AN OPTION ######################
 ###############################################################
+0. EXIT
 1. SETUP A NEW PATIENT
 2. EDIT AN EXISTING PATIENT
 3. SEND A MESSAGE TO A PATIENT""")
     option = input("Enter your option: ")
-    if option == '1':
+    if option == '0':
+        exit()
+    elif option == '1':
         setupPatient()
     elif option == '2':
         editPatient()
@@ -111,7 +129,6 @@ if __name__ == '__main__':
     BTN_PIN = GPIO_PIN_NO
     RPI_IP = 'RPI IP HERE'
     
-    hc = HealthcareWorker(LED_PIN, BTN_PIN, RPI_IP)
+    hc = HealthcareWorker(LED_PIN, BTN_PIN, 3, 4, RPI_IP)
     piThread = Thread(target=hc.start)
-    #hc.start()
     options()

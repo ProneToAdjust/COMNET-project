@@ -88,24 +88,17 @@ class Patient:
         self.mqtt_client.subscribe(topic)
 
     def on_message(self, client, userdata, msg):
-        msg = msg.payload.decode()
-        
-        # ttsMsg will be in the format:
-        # msg:tts:language
-        # eg, tts:en:Hello tts:cn:你好
-        
-        ttsMsg = msg.split(':')
-
-        if msg == 'off':
+        msg = json.loads(msg.payload)        
+        if msg['cmd'] == 'off':
             self.off_led()
             # disable button
             self.btn.when_activated = None
             # set check in datetime for next day
             self.check_in_time = self.check_in_time + datetime.timedelta(days=1)
         
-        elif ttsMsg[0] == 'tts':
+        elif msg['cmd'] == 'tts':
             print("1/4 Running TTS Method")
-            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[1],ttsMsg[2],))
+            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(msg['lang'],msg['msg'],))
             self.play_sound_thread.start()
 
     def init_gpio(self):
