@@ -1,48 +1,99 @@
 import os
-import pickle
 from HealthcareWorker import HealthcareWorker
 from threading import Thread
+import json
+from datetime import datetime
+import time
 
-#patientDictionary = {}
 hc = None
 piThread = None
 
-def setupPatient():
-    print("############# OPTION 1: SETUP PATIENT #############")
-    
-    
-    #with open('patient_dictionary.pkl', 'wb') as f:
-    #    pickle.dump(patientDictionary, f)
-    pass
-
 def editPatient():
-    print("############# OPTION 2: EDIT PATIENT #############")
-    
-    
-    #with open('patient_dictionary.pkl', 'wb') as f:
-    #    pickle.dump(patientDictionary, f)
-    pass
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("""
+###############################################################
+############## OPTION 1: EDIT PATIENT ALERT TIME ##############
+############# SELECT A PATIENT TO EDIT ALERT TIME #############
+###############################################################
+0. Back to main menu""")
+    patientFile = open("patients.txt", "r")
+    count = 0
+    patientList = []
+    for name in patientFile:
+        count += 1
+        patientList.append(name)
+        print("{count}. {name}".format(count=count, name=name).strip())
+    patientFile.close()
+    option = input("Enter your option: ")
+    if option == '0':
+        returnToOptions()
+    else:
+        try:
+            option = int(option)
+        except:
+            invalidInput()
+            editPatient()
+        if int(option) <= count:
+            changePatientTime(patientList[int(option)-1].replace(' ', '_').strip())
+        else:
+            invalidInput()
+            editPatient()
 
+def changePatientTime(name):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("""
+###############################################################
+################## CHANGE PATIENT ALERT TIME ##################
+###############################################################
+0. Back to main menu""")
+    timeStr = input("Enter new alert time (HH:MM): ")
+    if timeStr == '0':
+        pass
+    else:
+        try:
+            timeObject = datetime.strptime(timeStr, '%H:%M').time()
+            jsonString = json.dumps({"cmd": "time", "time": timeStr})
+            hc.send_message(name, jsonString)
+            print("TIME CHANGED")
+        except:
+            invalidInput()
+            changePatientTime(name)
+    returnToOptions()
+    
 def ttsMessage():
     os.system('cls' if os.name == 'nt' else 'clear')
     print("""
 ###############################################################
-################### OPTION 3: SEND MESSAGE ####################
+################### OPTION 2: SEND MESSAGE ####################
 ############# SELECT A PATIENT TO SEND MESSAGE TO #############
 ###############################################################
 0. Back to main menu""")
-    print("1. John Doe")
-    print("2. Jane Doe")
-    
+    patientFile = open("patients.txt", "r")
+    count = 0
+    patientList = []
+    for name in patientFile:
+        count += 1
+        patientList.append(name)
+        print("{count}. {name}".format(count=count, name=name).strip())
+    patientFile.close()
     option = input("Enter your option: ")
+    
     if option == "0":
-        options()
-    elif option == "1" or option == "2": # if patient exists
-        langMessage(int(option))
+        returnToOptions()
     else:
-        ttsMessage()
+        try:
+            option = int(option)
+        except:
+            invalidInput()
+            ttsMessage()
+        if option <= count:
+            langMessage(patientList[int(option)-1].replace(' ', '_').strip())
+        else:
+            invalidInput()
+            ttsMessage()
 
-def langMessage(patientID): # TODO determine how to send message to individual patients
+
+def langMessage(topic): # TODO determine how to send message to individual patients
     os.system('cls' if os.name == 'nt' else 'clear')
     # Select language
     print("""
@@ -54,16 +105,17 @@ def langMessage(patientID): # TODO determine how to send message to individual p
 2. Chinese""")
     option = input("Enter your option: ")
     if option == "0":
-        options()
+        returnToOptions()
     elif option == "1" or option == "2":
         language = "cn"
         if option == "1":
-            language = "en"            
-        composeMessage(patientID, language)
+            language = "en"
+        composeMessage(topic, language)
     else:
-        langMessage(patientID)
+        invalidInput()
+        langMessage(topic)
         
-def composeMessage(patientID, language):
+def composeMessage(topic, language):
     os.system('cls' if os.name == 'nt' else 'clear')
     # Compose message
     print("""
@@ -76,10 +128,9 @@ def composeMessage(patientID, language):
         pass
     else:
         # Forward message in HealthcareWorker.py
-        language = language + ":"
-        fullQuery = "tts:" + language + option
-        hc.on_send_message(fullQuery)
-    options()
+        jsonString = json.dumps({"cmd": "tts", "lang": language, "msg": option})
+        hc.send_message(topic, jsonString)
+    returnToOptions()
 
 def options():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -88,30 +139,39 @@ def options():
 ###############################################################
 ####################### SELECT AN OPTION ######################
 ###############################################################
-1. SETUP A NEW PATIENT
-2. EDIT AN EXISTING PATIENT
-3. SEND A MESSAGE TO A PATIENT""")
+0. EXIT
+1. CHANGE PATIENT ALERT TIME
+2. SEND A MESSAGE TO A PATIENT""")
     option = input("Enter your option: ")
-    if option == '1':
-        setupPatient()
-    elif option == '2':
+    if option == '0':
+        exit()
+    elif option == '1':
         editPatient()
-    elif option == '3':
+    elif option == '2':
         ttsMessage()
     else:
+        invalidInput()
         options()
+        
 
+def invalidInput():
+    print("\nInvalid input. Please try again.")
+    while True:
+        if input("Press enter to continue...") == "":
+            break
+    
+def returnToOptions():
+    print("\nReturning to main menu...")
+    time.sleep(3)
+    options()
 
-if __name__ == '__main__':
-    
-    # with open('patient_dictionary.pkl', 'rb') as f:
-    #     patientDictionary = pickle.load(f)
-    
+if __name__ == '__main__':    
     LED_PIN = GPIO_PIN_NO
     BTN_PIN = GPIO_PIN_NO
+    LED_PIN_2 = GPIO_PIN_NO
+    BTN_PIN_2 = GPIO_PIN_NO
     RPI_IP = 'RPI IP HERE'
     
-    hc = HealthcareWorker(LED_PIN, BTN_PIN, RPI_IP)
+    hc = HealthcareWorker(LED_PIN, BTN_PIN, LED_PIN_2, BTN_PIN_2, RPI_IP)
     piThread = Thread(target=hc.start)
-    #hc.start()
     options()

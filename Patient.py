@@ -4,30 +4,33 @@ import threading
 import paho.mqtt.client as mqtt
 from gpiozero import LED, Button
 from gpiozero.pins.pigpio import PiGPIOFactory
-#from TTS.api import TTS
 from gtts import gTTS
 import pygame
 import json
+from threading import Timer
+from sms import sms
 
 class Patient:
-    def __init__(self, check_in_time, led_pin, btn_pin, rpi_ip, name) -> None:
+    def __init__(self, check_in_time, check_out_time_limit, led_pin, btn_pin, rpi_ip, name) -> None:
         self.check_in_time = check_in_time
+        self.check_out_time_limit = check_out_time_limit
         self.led_pin = led_pin
         self.btn_pin = btn_pin
         self.rpi_ip = rpi_ip
         self.patient_name = name
+        self.current_time = datetime.datetime.now()
+        self.sms_sent = False
         self.init_mqtt()
         self.init_gpio()
         
     def start(self):
         # loop until it reaches the check in time
         while True:
-            time.sleep(1)
-
+            time.sleep(1)            
             if datetime.datetime.now() > self.check_in_time:
                 # notify user
                 print('press button')
-
+                
                 # turn on led
                 self.on_led()
 
@@ -46,6 +49,14 @@ class Patient:
 
         # keep looping when btn is not press and still has a callback function
         while not self.btn.is_active and self.btn.when_activated:
+            timediff = datetime.datetime.now() - self.current_time
+            format_timediff = "0" + str(timediff)[0:7]
+                
+            if(format_timediff == self.check_out_time_limit and self.sms_sent == False):
+                self.sms_sent = True
+                print("SMS sent")
+                send_sms = sms()
+                send_sms.send_sms("+6598226923")
             pass
 
     def on_button_press(self):
@@ -88,25 +99,23 @@ class Patient:
         self.mqtt_client.subscribe(topic)
 
     def on_message(self, client, userdata, msg):
-        msg = msg.payload.decode()
-        
-        # ttsMsg will be in the format:
-        # msg:tts:language
-        # eg, tts:en:Hello tts:cn:你好
-        
-        ttsMsg = msg.split(':')
-
-        if msg == 'off':
+        msg = json.loads(msg.payload)        
+        if msg['cmd'] == 'led_off':
             self.off_led()
             # disable button
             self.btn.when_activated = None
             # set check in datetime for next day
             self.check_in_time = self.check_in_time + datetime.timedelta(days=1)
         
-        elif ttsMsg[0] == 'tts':
-            print("1/4 Running TTS Method")
-            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(ttsMsg[1],ttsMsg[2],))
+        elif msg['cmd'] == 'tts':
+            self.play_sound_thread = threading.Thread(target=self.play_tts, args=(msg['lang'],msg['msg'],))
             self.play_sound_thread.start()
+        
+        elif msg['cmd'] == 'time':
+            today = datetime.datetime.today()
+            time = datetime.datetime.strptime(msg['time'], '%H:%M')
+            self.check_in_time = datetime.datetime(today.year, today.month, today.day, time.hour, time.minute)
+            print("New time set to: " + self.check_in_time.isoformat())
 
     def init_gpio(self):
         if self.rpi_ip is None:
@@ -128,21 +137,14 @@ class Patient:
         print('led off')
     
     def play_tts(self, lang, msg):
-        print("2/4 Converting message to audio")
         tts = None
         if lang == 'cn':
-            #tts = TTS(model_name="tts_models/zh-CN/baker/tacotron2-DDC-GST", progress_bar=True, gpu=False)
             tts = gTTS(text=msg, lang='zh-cn')
         else:
-            #tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True, gpu=False)
             tts = gTTS(text=msg, lang='en')
-        #tts.tts_to_file(text=msg, file_path="output.wav")
         tts.save("output.mp3")
-        print("3/4 Playing audio")
         pygame.mixer.init()
-        # sound = pygame.mixer.Sound('./output.wav')
         sound = pygame.mixer.Sound('./output.mp3')
         playing = sound.play()
         while playing.get_busy():
             pygame.time.delay(100)
-        print("4/4 End of audio")
